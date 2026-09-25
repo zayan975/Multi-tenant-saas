@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  
+
 }
 
 datasource db {
@@ -24,6 +24,19 @@ model User {
   emailVerified Boolean  @default(false)
   createdAt     DateTime @default(now())
   memberships   Membership[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Organization {
