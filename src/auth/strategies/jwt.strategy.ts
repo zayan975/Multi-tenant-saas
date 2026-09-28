@@ -6,12 +6,12 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(config: ConfigService) {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: config.get('JWT_SECRET'),
-    });
-  }
+  super({
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    ignoreExpiration: false,
+    secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
+  });
+}
 
   async validate(payload: any) {
     // Jo bhi yahan return hoga, wahi req.user ban jayega

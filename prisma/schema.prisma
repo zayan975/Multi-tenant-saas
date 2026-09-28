@@ -15,16 +15,23 @@ enum Role {
   MEMBER
 }
 
+enum TokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 model User {
   id            String   @id @default(uuid())
   firstName     String
   lastName      String
   email         String   @unique
-  password      String
+  password      String?
   emailVerified Boolean  @default(false)
   createdAt     DateTime @default(now())
   memberships   Membership[]
   refreshTokens RefreshToken[]
+  userTokens UserToken[]
+  googleId      String?  @unique
 }
 
 model RefreshToken {
@@ -36,7 +43,20 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
 
+  
   @@index([userId])
+}
+
+model UserToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  type      TokenType
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId, type])
 }
 
 model Organization {
