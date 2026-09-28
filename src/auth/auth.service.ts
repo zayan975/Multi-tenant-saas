@@ -89,18 +89,42 @@ export class AuthService {
     });
 
     if (!user) {
-      // same email already registered -> link it, otherwise create a new user
-      user = await this.prisma.user.upsert({
+      const existing = await this.prisma.user.findUnique({
         where: { email: g.email },
-        update: { googleId: g.googleId, emailVerified: true },
-        create: {
-          email: g.email,
-          googleId: g.googleId,
-          firstName: g.firstName,
-          lastName: g.lastName,
-          emailVerified: true,
-        },
       });
+
+      if (existing) {
+        // Link Google to the existing account. If that email was never verified,
+        // whoever registered it may not own it, so their password is removed
+        // and their sessions are killed. Google has now proven who owns the email.
+        const unverified = !existing.emailVerified;
+
+        user = await this.prisma.user.update({
+          where: { id: existing.id },
+          data: {
+            googleId: g.googleId,
+            emailVerified: true,
+            ...(unverified ? { password: null } : {}),
+          },
+        });
+
+        if (unverified) {
+          await this.prisma.refreshToken.updateMany({
+            where: { userId: existing.id },
+            data: { revoked: true },
+          });
+        }
+      } else {
+        user = await this.prisma.user.create({
+          data: {
+            email: g.email,
+            googleId: g.googleId,
+            firstName: g.firstName,
+            lastName: g.lastName,
+            emailVerified: true,
+          },
+        });
+      }
     }
 
     return this.issueTokens(user.id, user.email);
