@@ -76,7 +76,7 @@ export class AuthService {
     if (!passwordMatches)
       throw new UnauthorizedException('Invalid credentials');
 
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user);
   }
 
   async googleLogin(g: GoogleUser) {
@@ -127,7 +127,7 @@ export class AuthService {
       }
     }
 
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user);
   }
 
   /**
@@ -139,9 +139,13 @@ export class AuthService {
     return createHash('sha256').update(token).digest('hex');
   }
 
-  private async issueTokens(userId: string, email: string) {
+  private async issueTokens(user: {
+    id: string;
+    email: string;
+    isSuperAdmin: boolean;
+  }) {
     const accessToken = this.jwt.sign(
-      { sub: userId, email },
+      { sub: user.id, email: user.email, isSuperAdmin: user.isSuperAdmin },
       {
         secret: this.config.getOrThrow('JWT_SECRET'),
         expiresIn: this.config.getOrThrow('JWT_EXPIRES_IN'),
@@ -149,7 +153,7 @@ export class AuthService {
     );
 
     const refreshToken = this.jwt.sign(
-      { sub: userId, jti: randomUUID() },
+      { sub: user.id, jti: randomUUID() },
       {
         secret: this.config.getOrThrow('JWT_REFRESH_SECRET'),
         expiresIn: this.config.getOrThrow('JWT_REFRESH_EXPIRES_IN'),
@@ -165,7 +169,7 @@ export class AuthService {
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 
     await this.prisma.refreshToken.create({
-      data: { tokenHash, userId, expiresAt },
+      data: { tokenHash, userId: user.id, expiresAt },
     });
 
     return { accessToken, refreshToken };
@@ -211,7 +215,7 @@ export class AuthService {
     });
     if (!user) throw new UnauthorizedException('User not found');
 
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user);
   }
 
   async logout(refreshToken: string) {

@@ -32,6 +32,7 @@ model User {
   refreshTokens RefreshToken[]
   userTokens UserToken[]
   googleId      String?  @unique
+  isSuperAdmin Boolean @default(false)
 }
 
 model RefreshToken {
