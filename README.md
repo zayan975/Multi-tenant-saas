@@ -74,7 +74,8 @@ API docs: `http://localhost:3000/docs` (Swagger UI)
 ## Tests
 
 \`\`\`bash
-npm run test:e2e
+Unit tests: npm test
+E2E tests: npm run test:e2e
 \`\`\`
 
 13 e2e tests cover auth, refresh rotation/reuse detection, tenant isolation,

@@ -225,7 +225,7 @@ export class AuthService {
         secret: this.config.getOrThrow('JWT_REFRESH_SECRET'),
       });
     } catch {
-      return { message: 'Logged out' }; // invalid token — fail silently, don't leak info
+      return { message: 'Logged out' }; 
     }
 
     const tokenHash = this.hashToken(refreshToken);
